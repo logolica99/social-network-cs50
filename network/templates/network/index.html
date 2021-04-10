@@ -1,5 +1,29 @@
 {% extends "network/layout.html" %}
 
 {% block body %}
-    TODO
+    <div class="index">
+        <h2>All Posts</h2>
+
+        <div class="new-post">
+            <h3 >New post</h3>
+            <form method="POST" class='form'>
+
+                {% csrf_token %}
+                {{form.content}}
+                <input class="btn btn-info" type="submit">
+
+            </form>
+        </div>
+        <div class="posts">
+        {% for post in Posts%}
+            <div class="post">
+                <h4>{{post.user.username}}</h3>
+                <p>{{post.content}}</p>
+                <p class="date">{{post.created_at}} </p>
+                <p>{{post.likes.all.count}} &#10084</p>
+            </div>
+
+        {%endfor%}
+        </div>
+    </div>
 {% endblock %}

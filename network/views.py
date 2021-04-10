@@ -3,15 +3,30 @@ from django.db import IntegrityError
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.urls import reverse
+import datetime
 
 from .models import *
-
+from .forms import *
 
 def index(request):
+    form = PostingForm()
+
+    if request.method == 'POST':
+   
+        form_data = {
+            'user': User.objects.get(id=request.user.id),
+            'content': request.POST['content']
+        }
+        print(form_data)
+        form = PostingForm(form_data)
+       
     
+        if form.is_valid():
+            form.save()
+            return HttpResponseRedirect(reverse('index'))
 
-
-    return render(request, "network/index.html")
+    context={'Posts':Posts.objects.all(),'form':form}
+    return render(request, "network/index.html",context)
 
 
 def login_view(request):
