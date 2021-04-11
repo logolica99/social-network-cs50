@@ -3,19 +3,30 @@ from django.db import models
 import datetime
 
 class User(AbstractUser):
-    pass
+    def serialize(self):
+        return{
+            "id":self.id,
+            "username":self.username,
+            "email":self.email,
+            "following":[user for user in self.following.all()],
+            
+
+        }
 
 
-# class User_profile(models.Model):
-#     user_info = models.ForeignKey(User,on_delete=models.CASCADE,related_name="user_profile")
-#     posts = models.ForeignKey(Posts,on_delete=models.CASCADE,related_name="user_profile")
-#     Following_info = models.ForeignKey(Follower_model,on_delete=models.CASCADE,related_name="User_profile")
 
 class Posts(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="posts")
     created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
     content = models.TextField(blank=True)
+    def serialize(self):
+        return{
+            "id":self.id,
+            "username":self.user.username,
+            "created_at":self.created_at.strftime("%b %d %Y, %I:%M %p"),
+            "content":self.content,
+            "likes":self.likes.count(),
+    }
   
 class Likes(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="Liked_post")
