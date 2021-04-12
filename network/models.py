@@ -3,12 +3,14 @@ from django.db import models
 import datetime
 
 class User(AbstractUser):
+    
     def serialize(self):
         return{
             "id":self.id,
             "username":self.username,
             "email":self.email,
-            "following":[user for user in self.following.all()],
+       
+            
             
 
         }
@@ -19,6 +21,10 @@ class Posts(models.Model):
     user = models.ForeignKey(User,on_delete=models.CASCADE,related_name="posts")
     created_at = models.DateTimeField(auto_now_add=True)
     content = models.TextField(blank=True)
+
+  
+
+        
     def serialize(self):
         return{
             "id":self.id,

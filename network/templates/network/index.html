@@ -1,5 +1,27 @@
 {% extends "network/layout.html" %}
+{% load static %}
+
 
 {% block body %}
-    TODO
+<div class="index">
+    <h2>All Posts</h2>
+
+    <div class="new-post">
+        <h3 >New post</h3>
+        <form method="POST" class='form'>
+
+            {% csrf_token %}
+            {{form.content}}
+            <input class="btn btn-info" type="submit">
+
+        </form>
+    </div>
+    <div class="posts">
+
+    </div>
+</div>
 {% endblock %}
+{% block script %}
+        <script src="{% static 'network/indeexx.js'%}"></script>
+    {% endblock %}
+
