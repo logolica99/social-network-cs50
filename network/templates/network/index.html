@@ -6,15 +6,13 @@
 <div class="index">
     <h2>All Posts</h2>
 
-    <div class="new-post">
+    <div class="new-post" id="new-post">
         <h3 >New post</h3>
-        <form method="POST" class='form'>
+        <div id="newPostForm">
 
-            {% csrf_token %}
-            {{form.content}}
-            <input class="btn btn-info" type="submit">
-
-        </form>
+            <textarea name="" id="newPostTextarea" cols="70" rows="10"></textarea>
+            <button id="newPostSubmit" class="btn btn-secondary"> Submit </button>
+        </div>
     </div>
     <div class="posts">
 
@@ -22,6 +20,6 @@
 </div>
 {% endblock %}
 {% block script %}
-        <script src="{% static 'network/indeexx.js'%}"></script>
+        <script src="{% static 'network/index.js'%}"></script>
     {% endblock %}
 

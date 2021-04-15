@@ -14,24 +14,8 @@ from .forms import *
 
 
 def index(request):
-    form = PostingForm()
-
-    if request.method == 'POST':
-   
-        form_data = {
-            'user': User.objects.get(id=request.user.id),
-            'content': request.POST['content']
-        }
-        print(form_data)
-        form = PostingForm(form_data)
-       
     
-        if form.is_valid():
-            form.save()
-            return HttpResponseRedirect(reverse('index'))
-
-    context={'form':form}
-    return render(request, "network/index.html",context)
+    return render(request, "network/index.html")
    
 
 @csrf_exempt
@@ -51,16 +35,29 @@ def all_posts(request):
         data['liked']=liked
         reply.append(data)
 
-
+    if request.method=="POST":
+        data = json.loads(request.body)
+        print(data)
+        f = Posts(user=User.objects.get(id=request.user.id),content=data['content'])
+        f.save()
+    
+    
+    
     if request.method=="PUT":
         data = json.loads(request.body)
         print(data)
-        if data["like"]==True:
-            a = Likes(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['post_id']))
-            a.save()
-        elif data["like"]==False:
-            a = Likes.objects.get(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['post_id']))
-            a.delete()
+        if 'like' in data:
+            if data["like"]==True:
+                a = Likes(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['post_id']))
+                a.save()
+            elif data["like"]==False:
+                a = Likes.objects.get(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['post_id']))
+                a.delete()
+        if 'content' in data:
+            f=Posts.objects.get(id=data['post_id'])
+            f.content = data['content']
+            f.save()
+            
     return JsonResponse(reply,safe=False)
     
 
@@ -159,9 +156,22 @@ def user_info(request,user_id):
     # return render(request,"network/user-profile.html",context)
 
 
-
+@csrf_exempt
 def user_page(request,username):
-    return render(request,"network/user-profile.html")
+    context = {'user_id':User.objects.get(username=username).id}
+
+    if  request.method == "PUT":
+        data = json.loads(request.body)
+        print(data)
+        if data['follow']==False:
+            f = Follower_model.objects.get(user=User.objects.get(username=data['username']), following=User.objects.get(id=request.user.id))
+            f.delete()
+        else:
+            f = Follower_model(user=User.objects.get(username=data['username']), following=User.objects.get(id=request.user.id))
+            f.save()
+       
+
+    return render(request,"network/user-profile.html",context)
 
 def login_view(request):
     if request.method == "POST":
