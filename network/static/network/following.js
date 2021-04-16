@@ -11,8 +11,14 @@ document.addEventListener('DOMContentLoaded', function() {
 
 function load_page(){
     
-
-    fetch('/following')
+    const queryString = window.location.search;
+        const urlParams = new URLSearchParams(queryString);
+        const page_num= urlParams.get('page')
+        if(page_num==null){
+            let stateObj = { id: "100" };
+            window.history.pushState(stateObj,'Page 1','?page=1')
+        }
+    fetch(`/following?page=${page_num}`)
    .then(response => response.json())
    .then(posts =>{
        

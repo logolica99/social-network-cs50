@@ -6,10 +6,19 @@
         <h1 data-id="{{user_id}}" id="hello" style="display: none;">hello</h1>
         <div id="user"></div>
         <div class="posts"></div>
-
+        <nav aria-label="Page navigation example">
+                <ul class="pagination">
+                    {% if has_previous %}
+                        <li class="page-item"><a class="page-link" href="{% url 'user_page' username %}?page={{prev_page}}">Previous</a></li>
+                    {% endif %}
+                    {% if has_next %}
+                        <li class="page-item"><a class="page-link" href="{% url 'user_page' username %}?page={{next_page}}"">Next</a></li>
+                    {% endif %}
+                </ul>
+        </nav>
         
 {% endblock %}
 
 {% block script %}
-        <script src="{% static 'network/user-profile.js'%}"></script>
+        <script src="{% static 'network/user-profileee.js'%}"></script>
 {% endblock %} 

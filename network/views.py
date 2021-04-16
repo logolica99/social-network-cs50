@@ -7,7 +7,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 import json
-
+from django.core.paginator import Paginator,EmptyPage
+import math
 
 from .models import *
 from .forms import *
@@ -15,7 +16,24 @@ from .forms import *
 
 def index(request):
     
-    return render(request, "network/index.html")
+    page_num = int(request.GET.get('page',1))
+    num_of_posts = Posts.objects.all().count()
+    
+    min_page_num = 1
+    max_page_num = math.ceil(num_of_posts/10)
+    has_previous = False
+    if page_num > 1:
+        has_previous = True
+    has_next = False
+    if page_num < max_page_num:
+        has_next = True
+    print(has_previous, has_next)
+    next_page = page_num + 1
+    prev_page = page_num -1
+    
+
+    context = {'has_previous':has_previous,'has_next':has_next,'next_page':next_page,'prev_page':prev_page}
+    return render(request, "network/index.html",context)
    
 
 @csrf_exempt
@@ -57,8 +75,26 @@ def all_posts(request):
             f=Posts.objects.get(id=data['post_id'])
             f.content = data['content']
             f.save()
-            
-    return JsonResponse(reply,safe=False)
+    
+    
+    if request.GET.get('page')=="null":
+        page_num = 1
+
+    else:
+        page_num = int(request.GET.get('page',1))
+    
+    number_posts_per_page = 10
+    max__page_num = math.ceil(len(reply)/number_posts_per_page)
+    if page_num > max__page_num:
+        page_num=1
+    start = (page_num-1)*number_posts_per_page
+    end  =  (page_num-1)*number_posts_per_page+number_posts_per_page
+    if page_num == max__page_num:
+        end = len(reply)
+   
+    data_reply = [reply[i] for i in range(start,end)]
+  
+    return JsonResponse(data_reply,safe=False)
     
 
 def following(request):
@@ -96,8 +132,25 @@ def following(request):
         elif data["like"]==False:
             a = Likes.objects.get(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['post_id']))
             a.delete()
-        
-    return JsonResponse(following_posts,safe=False)
+    
+    
+    if request.GET.get('page')=="null":
+        page_num = 1
+
+    else:
+        page_num = int(request.GET.get('page',1))
+    
+    number_posts_per_page = 10
+    max__page_num = math.ceil(len(following_posts)/number_posts_per_page)
+    if page_num > max__page_num:
+        page_num=1
+    start = (page_num-1)*number_posts_per_page
+    end  =  (page_num-1)*number_posts_per_page+number_posts_per_page
+    if page_num == max__page_num:
+        end = len(following_posts)
+   
+    data_reply = [following_posts[i] for i in range(start,end)]
+    return JsonResponse(data_reply,safe=False)
     # following_posts= set()
     # for i in following_id:
     #     following_posts.add(Posts.objects.get(user=User.objects.get(id=i)))
@@ -105,7 +158,47 @@ def following(request):
     # return JsonResponse([post.serialize() for post in following_posts],safe=False)
 
 def following_posts(request):
-    return render(request,'network/following.html')
+    following_id = []
+    for follower in Follower_model.objects.all():
+        if follower.following == User.objects.get(id=request.user.id):
+            following_id.append(follower.user.id)
+
+    
+    following_posts = []
+    for i in following_id:
+      
+        postss = Posts.objects.filter(user=User.objects.get(id=i))
+        for post in postss:
+            data = post.serialize()
+            liked = True
+        
+            try:
+                Likes.objects.get(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['id']))
+            except:
+                liked = False
+    
+            data['liked']=liked
+
+            following_posts.append(data)
+
+    page_num = int(request.GET.get('page',1))
+    num_of_posts = len(following_posts)
+    
+    min_page_num = 1
+    max_page_num = math.ceil(num_of_posts/10)
+    has_previous = False
+    if page_num > 1:
+        has_previous = True
+    has_next = False
+    if page_num < max_page_num:
+        has_next = True
+    print(has_previous, has_next)
+    next_page = page_num + 1
+    prev_page = page_num -1
+    
+
+    context = {'has_previous':has_previous,'has_next':has_next,'next_page':next_page,'prev_page':prev_page}
+    return render(request,'network/following.html',context)
 
 @csrf_exempt
 def user_info(request,user_id):
@@ -160,7 +253,7 @@ def user_info(request,user_id):
 
 @csrf_exempt
 def user_page(request,username):
-    context = {'user_id':User.objects.get(username=username).id}
+    
 
     if  request.method == "PUT":
         data = json.loads(request.body)
@@ -172,8 +265,61 @@ def user_page(request,username):
             f = Follower_model(user=User.objects.get(username=data['username']), following=User.objects.get(id=request.user.id))
             f.save()
        
+    page_num = int(request.GET.get('page',1))
+    num_of_posts = Posts.objects.filter(user = User.objects.get(username=username)).count()
+    
+    min_page_num = 1
+    max_page_num = math.ceil(num_of_posts/10)
+    has_previous = False
+    if page_num > 1:
+        has_previous = True
+    has_next = False
+    if page_num < max_page_num:
+        has_next = True
+    print(has_previous, has_next)
+    next_page = page_num + 1
+    prev_page = page_num -1
+    
 
+    context = {'user_id':User.objects.get(username=username).id,'username':username,'has_previous':has_previous,'has_next':has_next,'next_page':next_page,'prev_page':prev_page}
     return render(request,"network/user-profile.html",context)
+
+
+def user_posts(request,username):
+    posts_all = Posts.objects.filter(user = User.objects.get(username=username))
+    posts_all = posts_all.order_by("-created_at").all()
+    reply = []
+    for post in posts_all:
+        data = post.serialize()
+        liked = True
+        
+        try:
+            Likes.objects.get(user=User.objects.get(id=request.user.id),post=Posts.objects.get(id=data['id']))
+        except:
+            liked = False
+   
+        data['liked']=liked
+        reply.append(data)
+    if request.GET.get('page')=="null":
+        page_num = 1
+
+    else:
+        page_num = int(request.GET.get('page',1))
+    
+    number_posts_per_page = 10
+    max__page_num = math.ceil(len(reply)/number_posts_per_page)
+    if page_num > max__page_num:
+        page_num=1
+    start = (page_num-1)*number_posts_per_page
+    end  =  (page_num-1)*number_posts_per_page+number_posts_per_page
+    if page_num == max__page_num:
+        end = len(reply)
+   
+    data_reply = [reply[i] for i in range(start,end)]
+  
+    return JsonResponse(data_reply,safe=False)
+
+
 
 def login_view(request):
     if request.method == "POST":
