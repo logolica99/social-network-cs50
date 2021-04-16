@@ -104,6 +104,8 @@ def following(request):
     # following_posts = following_posts.order_by("-created_at").all()
     # return JsonResponse([post.serialize() for post in following_posts],safe=False)
 
+def following_posts(request):
+    return render(request,'network/following.html')
 
 @csrf_exempt
 def user_info(request,user_id):
